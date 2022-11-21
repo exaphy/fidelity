@@ -1,0 +1,15 @@
+import SwiftUI
+
+class BalanceClass: ObservableObject {
+    @Published var originalBalance = 0.0
+    @Published var balance = 0.0
+    @Published var gain = 0.0
+    @Published var actualGain = 0.0
+    @Published var originalGain = 0.0
+    @Published var gainVariation = 0.0
+    @Published var percentage = 0.0
+    @Published var limit = 0.0
+    @Published var gainRangeOption = "Dollar"
+    @Published var leanPositive = false 
+    @Published var leanNegative = false
+}
