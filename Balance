@@ -1,0 +1,244 @@
+import SwiftUI
+
+extension Color {
+    static let fidelityGreen = Color(red: 0.46, green: 0.74, blue: 0.35)
+}
+
+struct Balance: View {
+    @StateObject var balance = BalanceClass()
+    @State private var isActive = false
+    @State private var showSheet = false
+    
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    
+    var body: some View {
+        ZStack {
+            Color.black
+            VStack {
+                HStack {
+                    Button("mrmouseey") {
+                        isActive.toggle()
+                    }
+                    .foregroundColor(isActive ? .white.opacity(0.25) : .white)
+                    Spacer()
+                    Button {
+                        showSheet = true
+                    } label: {
+                        Image(systemName: "person")
+                            .padding(.vertical, 5)
+                            .padding(.horizontal, 5)
+                            .clipShape(Capsule())
+                            .overlay(Capsule().strokeBorder(.white, lineWidth: 2))
+                            .foregroundColor(.white)
+                            .font(.subheadline)
+                    }
+                }
+                .padding()
+                
+                HStack {
+                    VStack(alignment: .leading, spacing: 7.5) {
+                        HStack {
+                            Text("All accounts")
+                                .font(.title2.bold())
+                            Image(systemName: "chevron.down")
+                                .font(.caption)
+                        }
+                        Text(String(balance.balance.formatted(.currency(code: "USD"))))
+                            .font(.title.bold())
+                        Text(balance.actualGain > 0 ? "+\(balance.actualGain.formatted(.currency(code: "USD"))) (\(balance.percentage.formatted(.percent))) today" : "\(balance.actualGain.formatted(.currency(code: "USD"))) (\(balance.percentage.formatted(.percent))) today")
+                            .foregroundColor(balance.actualGain >= 0 ? balance.actualGain == 0 ? .gray : Color.fidelityGreen : .red)
+                            .font(.subheadline)
+                    }
+                    Spacer()
+                }
+                .padding()
+                
+                VStack {
+                    Image("Chart")
+                        .resizable()
+
+                    HStack {
+                        Text("1M")
+                            .font(.subheadline)
+                            .foregroundColor(.black)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 7)
+                            .background(Color.fidelityGreen)
+                            .clipShape(Circle())
+                            .padding()
+                        Group {
+                            Text("1Y")
+                            Text("YTD")
+                        }
+                        .font(.subheadline)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(.gray.opacity(0.15))
+                        .clipShape(Circle())
+                        .padding()
+                    }
+                    
+                    
+                    HStack {
+                        Text("INDIVIDUAL - YOUTH ACCOUNT")
+                        Spacer()
+                        Text("\(balance.balance.formatted(.currency(code: "USD")))")
+                    }
+                    .font(.headline)
+                    .fontWeight(.light)
+                    
+                    HStack {
+                        Text("**8820")
+                            .foregroundColor(.gray)
+                        Spacer()
+                        Text(balance.actualGain > 0 ? "+\(balance.actualGain.formatted(.currency(code: "USD"))) (\(balance.percentage.formatted(.percent))) today" : "\(balance.actualGain.formatted(.currency(code: "USD"))) (\(balance.percentage.formatted(.percent))) today")
+                            .foregroundColor(balance.actualGain >= 0 ? balance.actualGain == 0 ? .gray : Color.fidelityGreen : .red)
+                    }
+                    .font(.caption)
+                 
+                    HStack {
+                        Text("Activity")
+                            .font(.headline.bold())
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.vertical, 10)
+                    
+                    HStack {
+                        Text("All Investments")
+                            .font(.headline.bold())
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.vertical, 10)
+                    
+                    HStack {
+                        Button("Tax Forms") {
+                            balance.originalBalance = 0
+                            balance.balance = 0
+                            balance.gain = 0
+                            balance.actualGain = 0
+                            balance.originalGain = 0
+                            balance.gainVariation = 0
+                            balance.percentage = 0
+                            balance.limit = 0
+                            isActive = false
+                        }
+                        .font(.headline.bold())
+                        .foregroundColor(.white)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.vertical, 10)
+                    
+                    Text("Send us feedback")
+                        .padding(.horizontal, 100)
+                        .padding(.vertical)
+                        .foregroundColor(.fidelityGreen)
+                        .overlay( 
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.fidelityGreen) 
+                        )
+                }
+                .padding()
+                
+               Spacer()
+            }
+        }
+        .onReceive(timer) { _ in 
+            guard isActive else { return }
+            guard balance.balance >= 0 else { return }
+            
+            if balance.limit > 0  {
+                if balance.gainRangeOption == "Dollar" && (balance.actualGain > balance.limit || balance.actualGain < -balance.limit) {
+                    balance.balance = balance.originalBalance
+                }  else if balance.gainRangeOption == "Percentage" && (balance.percentage > balance.limit && balance.percentage < -balance.limit)  {
+                    balance.balance = balance.originalBalance
+                } else if balance.gainRangeOption == "Dollar" {
+                    dollar()
+                } else {
+                    percentage()
+                }
+            } else if balance.gainRangeOption == "Dollar" {
+                dollar()
+            } else {
+                percentage()
+            }
+            
+            balance.gain = balance.originalGain
+            balance.actualGain = balance.balance - balance.originalBalance
+            balance.percentage = round((balance.balance - balance.originalBalance)) / round(balance.originalBalance)
+        }
+        .sheet(isPresented: $showSheet) {
+            BalanceSheet(balance: balance, isActive: $isActive)
+        }
+    }
+    
+    func dollar() {
+        let randomCents = Double.random(in: 0.0...0.99)
+        let guesser = Int.random(in: 0...1) 
+        let variation = Double.random(in: 0...balance.gainVariation)
+        
+        balance.gain += variation
+        balance.gain += randomCents
+        
+        if balance.leanPositive && balance.actualGain > 0 {
+            if guesser == 0 {
+                balance.balance += balance.gain
+            } else {
+                balance.balance -= balance.gain
+            }
+        } else if balance.leanPositive && balance.actualGain < 0 {
+            balance.balance += balance.gain
+        } else if balance.leanNegative && balance.actualGain < 0 {
+            if guesser == 0 {
+                balance.balance += balance.gain
+            } else {
+                balance.balance -= balance.gain
+            }
+        } else if balance.leanNegative && balance.actualGain > 0 {
+            balance.balance -= balance.gain
+        } else {
+            if guesser == 0 {
+                balance.balance += balance.gain
+            } else {
+                balance.balance -= balance.gain
+            } 
+        }
+    }
+    
+    func percentage() {
+        let guesser = Int.random(in: 0...1) 
+        let variation = Double.random(in: 0...balance.gainVariation)
+        
+        balance.gain += variation
+        let calculatedPercentage = (balance.gain * 100) / 100 + 1
+        
+        if balance.leanPositive && balance.actualGain > 0 {
+            if guesser == 0 {
+                balance.balance *= calculatedPercentage
+            } else {
+                balance.balance /= calculatedPercentage
+            }
+        } else if balance.leanPositive && balance.actualGain < 0 {
+            balance.balance *= balance.gain
+        } else if balance.leanNegative && balance.actualGain < 0 {
+            if guesser == 0 {
+                balance.balance *= calculatedPercentage
+            } else {
+                balance.balance /= calculatedPercentage
+            }
+        } else if balance.leanNegative && balance.actualGain > 0 {
+            balance.balance /= balance.gain
+        } else {
+            if guesser == 0 {
+                balance.balance *= calculatedPercentage
+            } else {
+                balance.balance /= calculatedPercentage
+            }
+        }
+    }
+}
