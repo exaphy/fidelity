@@ -1,0 +1,61 @@
+import LocalAuthentication
+import SwiftUI
+
+struct ContentView: View {
+    @State private var showScreen = false 
+    
+    var body: some View {
+        NavigationView {
+            TabView {
+                if showScreen == false {
+                    AdditionalView()
+                } else {
+                    Balance()
+                        .tabItem {
+                            Label("Home", systemImage: "house")
+                        }
+                        .toolbarBackground(Color.black, for: .tabBar)
+                        .toolbarBackground(.visible, for: .tabBar)
+                }
+              
+                Group {
+                    AdditionalView()
+                        .tabItem {
+                            Label("Invest", systemImage: "chart.xyaxis.line")
+                        }
+                    AdditionalView()
+                        .tabItem {
+                            Label("Transact", systemImage: "dollarsign")
+                        }
+                    AdditionalView()
+                        .tabItem {
+                            Label("Plan", systemImage: "line.diagonal.arrow")
+                        }
+                    AdditionalView()
+                        .tabItem {
+                            Label("Discover", systemImage: "magnifyingglass")
+                        }
+                }
+                .toolbarBackground(Color.black, for: .tabBar)
+                .toolbarBackground(.visible, for: .tabBar)
+            }
+            .accentColor(Color.fidelityGreen)
+        }
+        .onAppear(perform: authenticate)
+    }
+    
+    func authenticate() {
+        let context = LAContext()
+        var error: NSError? 
+        
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) { 
+            let reason = "We need biometrics to access account balance."
+            
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, error in
+                if success {
+                    showScreen = true 
+                } 
+            }
+        }
+    }
+}
