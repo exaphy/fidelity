@@ -1,0 +1,87 @@
+import SwiftUI
+
+struct BalanceSheet: View {
+    @ObservedObject var balance: BalanceClass
+    @Environment(\.dismiss) var dismiss
+    @Binding var isActive: Bool
+    
+    @State private var gainRangeOption = "Dollar"
+    let pickerOptions = ["Dollar", "Percentage"]
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section("Starting Balance") {
+                    TextField("Balance", value: $balance.balance, format: .currency(code: "USD"))
+                        .keyboardType(.decimalPad)
+                }
+                
+                Section("Gain Range") {
+                    Picker("Gain Range Type", selection: $gainRangeOption) {
+                        ForEach(pickerOptions, id: \.self) {
+                            Text($0)
+                        }
+                    }
+                    if gainRangeOption == "Dollar" {
+                        HStack {
+                            Text("Average Gain")
+                            Spacer()
+                            TextField("Average Gain", value: $balance.gain, format: .currency(code: "USD")).multilineTextAlignment(.trailing)
+                                .keyboardType(.decimalPad)
+                        }
+                        
+                        HStack {
+                            Text("Gain Variation (+/-)")
+                            Spacer()
+                            TextField("Gain Variation", value: $balance.gainVariation, format: .currency(code: "USD")).multilineTextAlignment(.trailing)
+                                .keyboardType(.decimalPad)
+                        }
+                        
+                        HStack {
+                            Text("Max Gain/Loss")
+                            Spacer()
+                            TextField("Max Gain/Loss", value: $balance.limit, format: .currency(code: "USD"))
+                                .keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                        }
+                    } else {
+                        HStack {
+                            Text("Average Gain")
+                            Spacer()
+                            TextField("Average Gain", value: $balance.gain, format: .percent).multilineTextAlignment(.trailing)
+                                .keyboardType(.decimalPad)
+                        }
+                        
+                        HStack {
+                            Text("Gain Variation (+/-)")
+                            Spacer()
+                            TextField("Gain Variation", value: $balance.gainVariation, format: .percent).multilineTextAlignment(.trailing)
+                                .keyboardType(.decimalPad)
+                        }
+                        
+                        HStack {
+                            Text("Max Gain/Loss")
+                            Spacer()
+                            TextField("Max Gain/Loss", value: $balance.limit, format: .percent)
+                                .keyboardType(.decimalPad).multilineTextAlignment(.trailing)
+                        }
+                    }
+                }
+                
+                Section("Additional Settings") {
+                    Toggle("Lean Positive", isOn: $balance.leanPositive)
+                    Toggle("Lean Negative", isOn: $balance.leanNegative)
+                }
+            }
+            .navigationTitle("Set Information")
+            .toolbar {
+                Button("Done") {
+                    balance.originalBalance = balance.balance
+                    balance.originalGain = balance.gain
+                    balance.gainRangeOption = gainRangeOption
+                    isActive = true
+                    dismiss() 
+                }
+            }
+        }
+    }
+}
