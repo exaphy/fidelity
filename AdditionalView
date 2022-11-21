@@ -1,0 +1,9 @@
+import SwiftUI
+
+struct AdditionalView: View {
+    
+    var body: some View {
+        Color.black
+            .ignoresSafeArea()
+    }
+}
